@@ -5,6 +5,7 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View, Text, KeyboardAvoidingView, Image, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const SignUp = () => {
@@ -137,7 +138,8 @@ const SignUp = () => {
   }
 
   return (
-    <KeyboardAvoidingView
+    <SafeAreaView className="flex-1 bg-green-400">
+      <KeyboardAvoidingView
       behavior="padding"
       className="flex-1 bg-brand-body"
     >
@@ -203,7 +205,6 @@ const SignUp = () => {
               placeholderTextColor="#8A8D96"
               onChangeText={onChange}
               value={value}
-              autoCapitalize="none"
             />
           }}
         />
@@ -220,7 +221,7 @@ const SignUp = () => {
               placeholderTextColor="#8A8D96"
               onChangeText={onChange}
               value={value}
-              autoCapitalize="words"
+              autoCapitalize="none"
               secureTextEntry
             />
           }}
@@ -252,6 +253,7 @@ const SignUp = () => {
 
       </View>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
