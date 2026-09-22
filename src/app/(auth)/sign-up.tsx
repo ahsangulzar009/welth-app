@@ -138,7 +138,7 @@ const SignUp = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-green-400">
+    <SafeAreaView className="flex-1">
       <KeyboardAvoidingView
       behavior="padding"
       className="flex-1 bg-brand-body"
