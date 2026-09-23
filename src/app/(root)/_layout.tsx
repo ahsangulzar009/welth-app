@@ -27,7 +27,7 @@ const RootGroupLayout = () => {
     return <Redirect href="/sign-in" />
   }
 
-  if (!minLoadDone || needsOnboarding) {
+  if (!minLoadDone || needsOnboarding===null) {
     return (
       <SafeAreaView>
         <View>
