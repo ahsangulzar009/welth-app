@@ -1,14 +1,18 @@
 import { createClerkSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@clerk/expo";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 export function useSupabase() {
   const { getToken } = useAuth();
 
-  const client = useMemo(() => {
-    return createClerkSupabaseClient(() => getToken())
-  }, [])
+  const getTokenRef = useRef(getToken)
+  useEffect(() => {
+    getTokenRef.current = getToken
+  }, [getToken])
 
+  const client = useMemo(() => {
+    return createClerkSupabaseClient(() => getTokenRef.current?.())
+  }, [])
   return client
 
 }
