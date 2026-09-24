@@ -5,6 +5,7 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query/client";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { StatusBar } from "expo-status-bar";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
 
@@ -18,6 +19,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+          <StatusBar style="light" />
           <Slot />
         </ClerkProvider>
       </QueryClientProvider>
