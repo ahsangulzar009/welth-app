@@ -1,3 +1,5 @@
+import BudgetModal from '@/components/BudgetModal';
+import TransactionRow from '@/components/TransactionRow';
 import { useAccountsQuery } from '@/hooks/queries/useAccountsQuery';
 import { useBudgetQuery } from '@/hooks/queries/useBudgetQuery';
 import { useTransactionsQuery } from '@/hooks/queries/useTransactionsQuery';
@@ -224,7 +226,25 @@ const Home = () => {
 
             {
               budget ? (
-                <></>
+                <>
+                  <Text className="text-brand-text-secondary text-xs mb-2">
+                    {formatPrice(monthExpense, currency)} of {formatPrice(budget.amount, currency)} spent
+                  </Text>
+
+                  <View
+                    className="h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(Math.round((monthExpense / budget.amount) * 100), 100)}%`,
+                      backgroundColor:
+                        monthExpense >= budget.amount
+                          ? "#FF6B4A"
+                          : monthExpense >= budget.amount * 0.8
+                            ? "#F7DC6F"
+                            : "#3DDC84"
+                    }}
+                  />
+
+                </>
               ) : (
                 <Text className="text-brand-text-secondary text-xs">
                   Tap to set monthly spending budget
@@ -292,12 +312,12 @@ const Home = () => {
               <ActivityIndicator color="#4A9EFF" />
             </View> : recentTransactions.length === 0 ? (
               <View className="items-center py-6">
-                <Feather name="inbox" size={28} color={"#BDC3C7"}/>
+                <Feather name="inbox" size={28} color={"#BDC3C7"} />
                 <Text className="text-brand-text-muted text-sm mt-3">No transactions yet</Text>
               </View>
             ) : (
-              recentTransactions.map((tex) => (
-                <></>
+              recentTransactions.map((tx) => (
+                <TransactionRow key={tx.id} tx={tx} currency={currency}/>
               ))
             )
           }
@@ -305,6 +325,16 @@ const Home = () => {
         </View>
 
       </ScrollView>
+
+      {user && (
+        <BudgetModal
+          visible={budgetModal}
+          budget={budget}
+          onClose={() => setBudgetModal(false)}
+          onSaved={() => setBudgetModal(false)}
+        />
+      )
+      }
     </SafeAreaView>
   )
 }
