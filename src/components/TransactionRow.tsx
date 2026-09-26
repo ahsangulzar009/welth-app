@@ -1,10 +1,11 @@
-import { View, Text } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 
 import { Transaction } from '@/lib/api/transactions';
 import { getCategoryConfig } from '@/lib/constants/categories';
 import { Feather } from '@react-native-vector-icons/feather';
 import { ComponentProps } from 'react';
 import { formatPrice } from '@/lib/utils';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 type FeatherIconName = ComponentProps<typeof Feather>['name'];
 const INPUT_METHOD_ICON: Record<Transaction["input_method"], FeatherIconName> = {
@@ -13,13 +14,13 @@ const INPUT_METHOD_ICON: Record<Transaction["input_method"], FeatherIconName> = 
   VOICE: "mic"
 }
 
-const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?: () => void, currency:string }) => {
+const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?: () => void, currency: string }) => {
   const config = getCategoryConfig(tx.category)
   const isIncome = tx.type === 'INCOME'
 
   const row = (
     <View
-      className="flex-row items-center bg-white rounded-2xl border border-[#E8E6DF] pl-3 pr-3.5 py-4 mt-1"
+      className="flex-row items-center bg-white rounded-2xl border border-[#E8E6DF] pl-3 pr-3.5 py-4"
       style={{ borderLeftWidth: 3, borderLeftColor: config.color }}
     >
       <View
@@ -61,8 +62,22 @@ const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?
     </View>
   )
 
+  if (!onDelete) return <View className="mb-2.5">{row}</View>
+
   return (
-    <View> {row}</View>
+    <Swipeable
+      overshootRight={false}
+      renderRightActions={() => (
+        <TouchableOpacity
+          onPress={onDelete}
+          className="bg-brand-coral rounded-2xl ml-2 w-16 h-17 mt-1 items-center justify-center"
+        >
+          <Feather name="trash-2" size={18} color={"#fff"} />
+        </TouchableOpacity>
+      )}
+    >
+      {row}
+    </Swipeable>
   )
 }
 
