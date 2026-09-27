@@ -8,7 +8,8 @@ import { Feather } from '@react-native-vector-icons/feather';
 import { eachDayOfInterval, format, startOfDay, startOfMonth } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, FlatList } from 'react-native'
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, FlatList, RefreshControl } from 'react-native'
+import { BarChart } from 'react-native-gifted-charts';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
@@ -249,9 +250,59 @@ const Transactions = () => {
               paddingTop: 8,
               paddingBottom: 100
             }}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={loadData} />
+            }
+            ListHeaderComponent={transactions.length > 0 ? (
+              <View className="bg-white rounded-2xl border border[#E8E6DF] p-4 mb-4">
+                <View className="flex-row justify-between items-center mb-3">
+                  <Text className="text-brand-bg text-xs font-medium">
+                    Daily income vs expense
+                  </Text>
+                  <View className="flex-row gap-3">
+                    <View className="flex-row items-center gap-1">
+                      <View className="size-2 rounded-full bg-brand-success" />
+                      <Text className="text-[10px] text-brand-text-secondary">Income</Text>
+                    </View>
+                    <View className="flex-row items-center gap-1">
+                      <View className="size-2 rounded-full bg-brand-coral" />
+                      <Text className="text-[10px] text-brand-text-secondary">Expense</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <BarChart
+                    data={dailyIncomeExpense}
+                    width={Math.max(dailyIncomeExpense.length * 9, 280)}
+                    height={120}
+                    barWidth={6}
+                    spacing={4}
+                    hideYAxisText
+                    xAxisColor={"#E8E6DF"}
+                    yAxisColor={"transparent"}
+                    rulesColor={"#F0EEE7"}
+                    noOfSections={3}
+                    xAxisLabelTextStyle={{ color: "#8A8D96", fontSize: 7 }}
+                    isThreeD={false}
+                    roundedTop
+                  />
+                </ScrollView>
+
+              </View>
+            ) : null}
+            ListEmptyComponent={
+              <View className="items-center justify-center py-20">
+                <Feather name="inbox" size={32} color={"#BDC3C7"} />
+                <Text className="text-brand-text-muted text-sm mt-3">
+                  {search ? "No matching transactions" : "No transactions yet."}
+                </Text>
+              </View>
+            }
           />
         )
       }
+
 
     </SafeAreaView>
   )
