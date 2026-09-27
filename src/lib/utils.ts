@@ -5,17 +5,22 @@ import * as Sharing from 'expo-sharing'
 
 export function formatPrice(
   value: number,
-  currency: string
+  currency?: string
 ): string {
-  const locale = currency === 'PKR' ? "en-PK" : undefined
+  const validCurrency = currency && currency.trim() !== "" ? currency : "USD"
+  const locale = validCurrency === 'PKR' ? "en-PK" : undefined
   const amount = Number(value)
   const hasDecimals = !Number.isInteger(amount)
 
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: hasDecimals ? 2 : 0,
-  }).format(value)
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: validCurrency,
+      maximumFractionDigits: hasDecimals ? 2 : 0,
+    }).format(amount)
+  } catch {
+    return `${validCurrency} ${amount.toFixed(2)}`
+  }
 }
 
 const EXPORT_WINDOW_DAYS = 30

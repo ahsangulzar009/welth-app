@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native'
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
 
 import { Transaction } from '@/lib/api/transactions';
 import { getCategoryConfig } from '@/lib/constants/categories';
@@ -14,14 +14,14 @@ const INPUT_METHOD_ICON: Record<Transaction["input_method"], FeatherIconName> = 
   VOICE: "mic"
 }
 
-const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?: () => void, currency: string }) => {
+const TransactionRow = ({ tx, onDelete, currency, isDeleting }: { tx: Transaction, onDelete?: () => void, currency?: string, isDeleting?: boolean }) => {
   const config = getCategoryConfig(tx.category)
   const isIncome = tx.type === 'INCOME'
 
   const row = (
     <View
       className="flex-row items-center bg-white rounded-2xl border border-[#E8E6DF] pl-3 pr-3.5 py-4"
-      style={{ borderLeftWidth: 3, borderLeftColor: config.color }}
+      style={{ borderLeftWidth: 3, borderLeftColor: config.color, opacity: isDeleting ? 0.4 : 1 }}
     >
       <View
         className="size-10 rounded-full items-center justify-center mr-3"
@@ -55,10 +55,16 @@ const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?
         </View>
       </View>
 
-      <Text className={`text-sm font-medium ${isIncome ? "text-brand-success" : "text-brand-coral"}`}>
-        {isIncome ? "+" : "-"}
-        {formatPrice(tx.amount, currency)}
-      </Text>
+      {
+        isDeleting ? (
+          <ActivityIndicator size="small" color="#8A8D96" />
+        ) : (
+          <Text className={`text-sm font-medium ${isIncome ? "text-brand-success" : "text-brand-coral"}`} >
+            {isIncome ? "+" : "-"}
+            {formatPrice(tx.amount, currency)}
+          </Text>
+        )
+      }
     </View>
   )
 
@@ -70,9 +76,16 @@ const TransactionRow = ({ tx, onDelete, currency }: { tx: Transaction, onDelete?
       renderRightActions={() => (
         <TouchableOpacity
           onPress={onDelete}
+          disabled={isDeleting}
           className="bg-brand-coral rounded-2xl ml-2 w-16 h-17 mt-1 items-center justify-center"
         >
-          <Feather name="trash-2" size={18} color={"#fff"} />
+          {
+            isDeleting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Feather name="trash-2" size={18} color={"#fff"} />
+            )
+          }
         </TouchableOpacity>
       )}
     >

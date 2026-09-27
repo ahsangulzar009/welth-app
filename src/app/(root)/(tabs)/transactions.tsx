@@ -1,3 +1,4 @@
+import TransactionRow from '@/components/TransactionRow';
 import { useDeleteTransactionMutation } from '@/hooks/mutation/useTransactionMutation';
 import { useAccountsQuery } from '@/hooks/queries/useAccountsQuery';
 import { useTransactionsQuery } from '@/hooks/queries/useTransactionsQuery';
@@ -6,8 +7,8 @@ import { exportTransactionsToCSV } from '@/lib/utils';
 import { Feather } from '@react-native-vector-icons/feather';
 import { eachDayOfInterval, format, startOfDay, startOfMonth } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
@@ -28,7 +29,7 @@ const Transactions = () => {
   const router = useRouter()
   const [activeFilter, setActiveFilter] = useState<(typeof FILTERS)[number]>("All")
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null)
-  const [search, setSearch] = useState(false)
+  const [search, setSearch] = useState("")
   const [exporting, setExporting] = useState(false);
 
   const typeFilter: TransactionType | null =
@@ -39,15 +40,15 @@ const Transactions = () => {
         : null
 
   const {
-    data: transactions=[],
+    data: transactions = [],
     isLoading: transaactionsLoading,
     isRefetching: transactionsRefetching,
     isError: transactionsError,
     refetch: refetchTransactions
   } = useTransactionsQuery({ type: typeFilter, accountId: activeAccountId })
 
-  const { data: accounts, refetch: refetchAccounts } = useAccountsQuery();
-  const { mutateAsync: removeTransaction } = useDeleteTransactionMutation();
+  const { data: accounts = [], refetch: refetchAccounts } = useAccountsQuery();
+  const { mutateAsync: removeTransaction, isPending: isDeleting, variables: deletingTx } = useDeleteTransactionMutation();
 
   const loading = transaactionsLoading;
   const refreshing = transactionsRefetching;
@@ -70,17 +71,69 @@ const Transactions = () => {
     } catch (error) {
       console.error("Export failed", error)
       Alert.alert("Error", "Couldn't export transactions.")
-    } finally{
+    } finally {
       setExporting(false)
     }
   }
 
   function handleDelete(tx: Transaction) {
-
+    Alert.alert(
+      "Delete transaction",
+      "Are you sure you want to delete this transaction?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const { error: deleteError } = await removeTransaction(tx);
+            if (deleteError) {
+              Alert.alert("Error", "Couldn't delete this transaction.")
+            }
+          }
+        }
+      ]
+    )
   }
 
+  const filteredTransactions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return transactions;
+
+    return transactions.filter(
+      (tx) =>
+        tx.description?.toLowerCase().includes(q) ||
+        tx.category?.toLowerCase().includes(q)
+    )
+
+  }, [transactions, search])
+
+  const dailyIncomeExpense = useMemo(() => {
+    const days = currentMonthDays();
+
+    return days.flatMap(({ key, label }) => {
+      const income = transactions
+        .filter(
+          (tx) => tx.type === "INCOME" && dayKey(new Date(tx.date)) === key
+        )
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      const expense = transactions
+        .filter(
+          (tx) => tx.type === "EXPENSE" && dayKey(new Date(tx.date)) === key
+        )
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      return [
+        { value: income, label, frontColor: "#3DDC84" },
+        { value: expense, label, frontColor: "#FF6B4A" }
+      ]
+    })
+
+  }, [transactions])
+
   return (
-    <SafeAreaView className="flex-1 bg-brand-body" edges={["top", "bottom"]}>
+    <SafeAreaView className="flex-1 bg-brand-body" edges={["top"]}>
       <View className="px-5 pt-3 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-brand-bg text-xl font-semibold">Transactions</Text>
@@ -99,7 +152,107 @@ const Transactions = () => {
             }
           </TouchableOpacity>
         </View>
+
+        <View className="flex-row items-center gap-2 bg-white rounded-xl border border-[#E8E6DF] px-2.5 py-1 mb-2.5">
+          <Feather name="search" size={15} color={"#8A8D96"} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search transactions"
+            placeholderTextColor={"#8A8D96"}
+            className="flex-1 text-xs text-brand-bg"
+          />
+          {
+            search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <Feather name="x" size={15} color={"#8A8D96"} />
+              </TouchableOpacity>
+            )
+          }
+        </View>
+
+        <View className="flex-row gap-2 mb-2.5">
+          {
+            FILTERS.map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                onPress={() => setActiveFilter(filter)}
+                className={`px-3.5 py-1.5 rounded-full border ${activeFilter === filter ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
+                  }`}
+              >
+                <Text className={`text-sm ${activeFilter === filter ? "text-white" : "text-brand-text-secondary"}`}>
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            ))
+          }
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          <View className="flex-row gap-2">
+            <TouchableOpacity
+              onPress={() => setActiveAccountId(null)}
+              className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === null ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
+                }`}
+            >
+              <Text className={`text-sm ${activeAccountId === null ? "text-white" : "text-brand-text-secondary"}`}>
+                All Accounts
+              </Text>
+            </TouchableOpacity>
+
+            {
+              accounts.map((account) => (
+                <TouchableOpacity
+                  key={account.id}
+                  onPress={() => setActiveAccountId(account.id)}
+                  className={`px-3.5 py-1.5 rounded-full border ${activeAccountId === account.id ? "bg-brand-bg border-brand-bg" : "bg-white border-[#E8E6DF]"
+                    }`}
+                >
+                  <Text className={`text-sm ${activeAccountId === account.id ? "text-white" : "text-brand-text-secondary"}`}>
+                    {account.name}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            }
+
+          </View>
+        </ScrollView>
       </View>
+
+      {
+        loading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={"#4A9EEF"} />
+          </View>
+        ) : error ? (
+          <View className="flex-1 items-center justify-center px-10">
+            <Feather name="alert-circle" size={32} color={"#FF6B4A"} />
+            <Text className="text-brand-text-muted text-sm mt-3 text-center">
+              Couldn't load transactions.
+            </Text>
+            <TouchableOpacity
+              onPress={() => loadData()}
+            >
+              <Text className="text-white text-xs font-medium">Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredTransactions}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <TransactionRow isDeleting={isDeleting && deletingTx?.id === item.id} tx={item} onDelete={() => handleDelete(item)} />}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: 100
+            }}
+          />
+        )
+      }
+
     </SafeAreaView>
   )
 }
