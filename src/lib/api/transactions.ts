@@ -73,3 +73,47 @@ export async function deleteTransaction(
 
   return { error: null }
 }
+
+export interface NewTransaction {
+  id: string;
+  account_id: string;
+  type: TransactionType
+  amount: number;
+  category: CategoryKey;
+  description?: string | null;
+  date: string;
+  input_method: InputMethod;
+  voice_transcript?: string | null;
+}
+
+export async function createTransaction(
+  supabase: SupabaseClient,
+  payload: NewTransaction
+) {
+  const { data: transaction, error: insertError } = await supabase
+    .from("transactions")
+    .insert(payload)
+    .select()
+    .single()
+
+  if (insertError) return { transaction: null, error: insertError }
+
+  const { data: account, error: fetchError } = await supabase
+    .from("accounts")
+    .select("balance")
+    .eq("id", payload.account_id)
+    .single();
+
+  if (fetchError) return { error: fetchError }
+
+  const delta = payload.type === 'INCOME' ? payload.amount : -payload.amount;
+
+  const { error: balanceError } = await supabase
+    .from("accounts")
+    .update({ balance: account.balance + delta })
+    .eq("id", payload.account_id)
+
+  if (balanceError) return { error: balanceError }
+
+  return { transaction: transaction as Transaction, error: null }
+}
