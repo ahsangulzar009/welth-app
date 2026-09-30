@@ -29,7 +29,7 @@ const RootGroupLayout = () => {
 
   if (!minLoadDone || needsOnboarding===null) {
     return (
-      <SafeAreaView>
+      <SafeAreaView className="flex-1 items-center justify-center bg-brand-text-secondary">
         <View>
           <ActivityIndicator size="large" color="#1A1D26" />
         </View>
