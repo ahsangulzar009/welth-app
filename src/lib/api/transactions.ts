@@ -75,7 +75,7 @@ export async function deleteTransaction(
 }
 
 export interface NewTransaction {
-  id: string;
+  user_id: string;
   account_id: string;
   type: TransactionType
   amount: number;
