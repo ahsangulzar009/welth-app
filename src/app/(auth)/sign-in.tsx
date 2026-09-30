@@ -3,7 +3,7 @@ import { useSignIn } from '@clerk/expo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { View, Text, KeyboardAvoidingView, Image, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, KeyboardAvoidingView, Image, TextInput, TouchableOpacity, ActivityIndicator, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
@@ -136,7 +136,8 @@ const SignIn = () => {
   return (
     <SafeAreaView className="flex-1 bg-brand-body">
       <KeyboardAvoidingView
-        behavior="padding"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? -70 : 0}
         className="flex-1"
       >
         <View className="flex-1 justify-center px-6 -mt-16">
